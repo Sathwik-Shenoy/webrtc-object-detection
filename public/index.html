@@ -111,6 +111,183 @@
             background: linear-gradient(45deg, #44a08d, #4ecdc4);
         }
         
+        .btn.tertiary {
+            background: linear-gradient(45deg, #a8e6cf, #7fcdcd);
+        }
+        
+        .btn.tertiary:hover {
+            background: linear-gradient(45deg, #7fcdcd, #a8e6cf);
+        }
+        
+        .btn.quaternary {
+            background: linear-gradient(45deg, #ffd93d, #ff9500);
+        }
+        
+        .btn.quaternary:hover {
+            background: linear-gradient(45deg, #ff9500, #ffd93d);
+        }
+        
+        .features {
+            margin-top: 60px;
+            text-align: left;
+        }
+        
+        .features h2 {
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 2.5em;
+        }
+        
+        .feature-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .feature {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .feature-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        
+        .feature h3 {
+            margin-bottom: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .options {
+                grid-template-columns: 1fr;
+            }
+            
+            .option-card {
+                padding: 30px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 WebRTC Object Detection</h1>
+            <p>Real-time object detection with your mobile camera streamed to your laptop via WebRTC</p>
+        </div>
+        
+        <div class="options">
+            <div class="option-card">
+                <div class="option-icon">💻</div>
+                <div class="option-title">Laptop Viewer</div>
+                <div class="option-description">
+                    Start the laptop viewer to receive and display the mobile camera stream with real-time object detection overlay.
+                </div>
+                <a href="/laptop-viewer.html" class="btn primary">Start Laptop Viewer</a>
+            </div>
+            
+            <div class="option-card">
+                <div class="option-icon">📱</div>
+                <div class="option-title">Mobile Camera</div>
+                <div class="option-description">
+                    Connect your mobile device to stream camera feed to the laptop. Scan QR code from laptop viewer for easy connection.
+                </div>
+                <a href="/phone-connect.html" class="btn secondary">Connect Mobile</a>
+            </div>
+            
+            <div class="option-card">
+                <div class="option-icon">🎯</div>
+                <div class="option-title">3D AR View</div>
+                <div class="option-description">
+                    Experience advanced 3D augmented reality object detection with spatial tracking and dimensional analysis.
+                </div>
+                <a href="/laptop-viewer.html?mode=3d" class="btn tertiary">Launch 3D View</a>
+            </div>
+            
+            <div class="option-card">
+                <div class="option-icon">📊</div>
+                <div class="option-title">Analytics Dashboard</div>
+                <div class="option-description">
+                    View comprehensive analytics, performance metrics, and detailed detection statistics in real-time.
+                </div>
+                <a href="/laptop-viewer.html?mode=analytics" class="btn quaternary">Open Dashboard</a>
+            </div>
+        </div>
+        
+        <div class="features">
+            <h2>✨ Features</h2>
+            <div class="feature-list">
+                <div class="feature">
+                    <div class="feature-icon">🔒</div>
+                    <h3>HTTPS Secure</h3>
+                    <p>Secure HTTPS connection enables mobile camera access and encrypted data transmission.</p>
+                </div>
+                
+                <div class="feature">
+                    <div class="feature-icon">🚀</div>
+                    <h3>Real-time Streaming</h3>
+                    <p>Low-latency WebRTC peer-to-peer connection for smooth video streaming.</p>
+                </div>
+                
+                <div class="feature">
+                    <div class="feature-icon">🎯</div>
+                    <h3>Object Detection</h3>
+                    <p>AI-powered object recognition with bounding boxes and confidence scores.</p>
+                </div>
+                
+                <div class="feature">
+                    <div class="feature-icon">📊</div>
+                    <h3>Performance Metrics</h3>
+                    <p>Real-time FPS, latency, and detection statistics monitoring.</p>
+                </div>
+                
+                <div class="feature">
+                    <div class="feature-icon">📱</div>
+                    <h3>Mobile Optimized</h3>
+                    <p>Responsive design works seamlessly on mobile devices and tablets.</p>
+                </div>
+                
+                <div class="feature">
+                    <div class="feature-icon">🔗</div>
+                    <h3>QR Code Connect</h3>
+                    <p>Easy mobile connection via QR code scanning - no manual URL typing needed.</p>
+                </div>
+                
+                <div class="feature">
+                    <div class="feature-icon">🎮</div>
+                    <h3>3D AR Mode</h3>
+                    <p>Advanced augmented reality with 3D bounding boxes and spatial object tracking.</p>
+                </div>
+                
+                <div class="feature">
+                    <div class="feature-icon">📈</div>
+                    <h3>Analytics Dashboard</h3>
+                    <p>Comprehensive statistics, charts, and performance analysis tools.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+        
+        .btn.primary:hover {
+            background: linear-gradient(45deg, #ee5a24, #ff6b6b);
+        }
+        
+        .btn.secondary {
+            background: linear-gradient(45deg, #4ecdc4, #44a08d);
+        }
+        
+        .btn.secondary:hover {
+            background: linear-gradient(45deg, #44a08d, #4ecdc4);
+        }
+        
         .features {
             margin-top: 60px;
             text-align: left;
