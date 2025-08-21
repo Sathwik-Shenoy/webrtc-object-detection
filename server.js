@@ -77,10 +77,49 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Function to get local IP address
+function getLocalIP() {
+  const { networkInterfaces } = require('os');
+  const nets = networkInterfaces();
+  const results = {};
+
+  for (const name of Object.keys(nets)) {
+    for (const net of nets[name]) {
+      // Skip over non-IPv4 and internal (i.e. 127.0.0.1) addresses
+      if (net.family === 'IPv4' && !net.internal) {
+        if (!results[name]) {
+          results[name] = [];
+        }
+        results[name].push(net.address);
+      }
+    }
+  }
+  
+  // Return the first external IPv4 address found
+  for (const name of Object.keys(results)) {
+    if (results[name].length > 0) {
+      return results[name][0];
+    }
+  }
+  
+  return 'localhost'; // fallback
+}
+
 // Generate QR code for phone connection
 app.get('/qr', async (req, res) => {
   try {
-    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const host = req.get('host');
+    let baseUrl;
+    
+    // If the request is coming from localhost, use the local IP for QR code
+    if (host.includes('localhost') || host.includes('127.0.0.1')) {
+      const localIP = getLocalIP();
+      const port = host.split(':')[1] || '3000';
+      baseUrl = `${req.protocol}://${localIP}:${port}`;
+    } else {
+      baseUrl = `${req.protocol}://${host}`;
+    }
+    
     const phoneUrl = `${baseUrl}/phone.html`;
     
     const qrCode = await QRCode.toDataURL(phoneUrl, {
@@ -156,10 +195,14 @@ app.use(errorHandler);
 // Start server
 const PORT = config.PORT;
 server.listen(PORT, () => {
+  const localIP = getLocalIP();
   logger.info(`🚀 WebRTC Object Detection Server running on port ${PORT}`);
-  logger.info(`📱 Phone URL: http://localhost:${PORT}/phone.html`);
-  logger.info(`💻 Viewer URL: http://localhost:${PORT}`);
+  logger.info(`💻 Viewer URL (local): http://localhost:${PORT}`);
+  logger.info(`📱 Phone URL (local): http://localhost:${PORT}/phone.html`);
+  logger.info(`💻 Viewer URL (network): http://${localIP}:${PORT}`);
+  logger.info(`📱 Phone URL (network): http://${localIP}:${PORT}/phone.html`);
   logger.info(`🧠 Inference mode: ${config.MODE}`);
+  logger.info(`🔗 Scan QR code at: http://localhost:${PORT}/qr`);
   
   if (config.NODE_ENV === 'development') {
     logger.info(`🔍 Health check: http://localhost:${PORT}/health`);
