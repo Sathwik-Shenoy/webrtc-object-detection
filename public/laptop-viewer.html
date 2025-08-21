@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laptop Viewer - Object Detection</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #000;
+            color: white;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .video-container {
+            display: flex;
+            gap: 20px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .video-section {
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        video {
+            width: 100%;
+            max-width: 640px;
+            height: auto;
+            border: 2px solid #333;
+            border-radius: 8px;
+            background: #222;
+        }
+        
+        canvas {
+            width: 100%;
+            max-width: 640px;
+            height: auto;
+            border: 2px solid #007bff;
+            border-radius: 8px;
+            background: #222;
+        }
+        
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+        
+        .status.info {
+            background: #17a2b8;
+        }
+        
+        .status.success {
+            background: #28a745;
+        }
+        
+        .status.error {
+            background: #dc3545;
+        }
+        
+        .status.warning {
+            background: #ffc107;
+            color: #000;
+        }
+        
+        .controls {
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .btn {
+            padding: 15px 30px;
+            margin: 10px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+            display: inline-block;
+            min-width: 120px;
+        }
+        
+        .btn:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        
+        .btn.success {
+            background: #28a745;
+        }
+        
+        .btn.danger {
+            background: #dc3545;
+        }
+        
+        #qrCode {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        #qrCode img {
+            max-width: 256px;
+            border: 2px solid #333;
+            border-radius: 8px;
+        }
+        
+        #log {
+            text-align: left;
+            background: #222;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .detection-info {
+            background: #333;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .detection-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin: 10px 0;
+        }
+        
+        .stat {
+            background: #444;
+            padding: 10px;
+            border-radius: 4px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #ccc;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>💻 Laptop Viewer - WebRTC Object Detection</h1>
+        
+        <div id="status" class="status info">
+            Waiting for phone connection...
+        </div>
+        
+        <div class="controls">
+            <button id="startBtn" class="btn">Start Waiting</button>
+            <button id="generateQRBtn" class="btn">Generate QR Code</button>
+            <button id="toggleDetectionBtn" class="btn" disabled>Start Detection</button>
+        </div>
+        
+        <div id="qrCode"></div>
+        
+        <div class="video-container">
+            <div class="video-section">
+                <h3>📱 Phone Stream</h3>
+                <video id="remoteVideo" autoplay playsinline muted></video>
+            </div>
+            <div class="video-section">
+                <h3>🎯 Object Detection</h3>
+                <canvas id="detectionCanvas"></canvas>
+            </div>
+        </div>
+        
+        <div class="detection-info">
+            <h3>Detection Statistics</h3>
+            <div class="detection-stats">
+                <div class="stat">
+                    <div class="stat-value" id="fpsValue">0</div>
+                    <div class="stat-label">FPS</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="objectsValue">0</div>
+                    <div class="stat-label">Objects</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="latencyValue">0</div>
+                    <div class="stat-label">Latency (ms)</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="confidenceValue">0</div>
+                    <div class="stat-label">Avg Confidence</div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="log"></div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        class LaptopViewer {
+            constructor() {
+                this.remoteVideo = document.getElementById('remoteVideo');
+                this.detectionCanvas = document.getElementById('detectionCanvas');
+                this.ctx = this.detectionCanvas.getContext('2d');
+                this.startBtn = document.getElementById('startBtn');
+                this.generateQRBtn = document.getElementById('generateQRBtn');
+                this.toggleDetectionBtn = document.getElementById('toggleDetectionBtn');
+                this.statusDiv = document.getElementById('status');
+                this.logDiv = document.getElementById('log');
+                this.qrCodeDiv = document.getElementById('qrCode');
+                
+                this.socket = null;
+                this.peerConnection = null;
+                this.isDetectionActive = false;
+                this.detectionInterval = null;
+                this.stats = {
+                    fps: 0,
+                    objects: 0,
+                    latency: 0,
+                    confidence: 0
+                };
+                
+                this.setupEventListeners();
+            }
+            
+            setupEventListeners() {
+                this.startBtn.addEventListener('click', () => this.startWaiting());
+                this.generateQRBtn.addEventListener('click', () => this.generateQRCode());
+                this.toggleDetectionBtn.addEventListener('click', () => this.toggleDetection());
+            }
+            
+            startWaiting() {
+                this.log('🚀 Starting laptop viewer...');
+                this.updateStatus('Connecting to server...', 'info');
+                
+                try {
+                    this.socket = io({
+                        transports: ['websocket', 'polling']
+                    });
+                    
+                    this.socket.on('connect', () => {
+                        this.log('✅ Connected to server');
+                        this.updateStatus('Waiting for phone connection...', 'info');
+                        this.startBtn.disabled = true;
+                        this.generateQRBtn.disabled = false;
+                    });
+                    
+                    this.socket.on('disconnect', () => {
+                        this.log('❌ Disconnected from server');
+                        this.updateStatus('Disconnected from server', 'error');
+                    });
+                    
+                    this.socket.on('phone-ready', () => {
+                        this.log('📱 Phone is ready');
+                        this.updateStatus('Phone connected, setting up stream...', 'info');
+                    });
+                    
+                    this.socket.on('offer', (offer) => {
+                        this.log('📥 Received offer from phone');
+                        this.handleOffer(offer);
+                    });
+                    
+                    this.socket.on('ice-candidate', (candidate) => {
+                        this.log('🧊 Received ICE candidate');
+                        this.handleIceCandidate(candidate);
+                    });
+                    
+                    this.socket.on('phone-disconnected', () => {
+                        this.log('📱 Phone disconnected');
+                        this.updateStatus('Phone disconnected', 'warning');
+                        this.cleanup();
+                    });
+                    
+                } catch (error) {
+                    this.log('❌ Connection failed: ' + error.message);
+                    this.updateStatus('Connection failed', 'error');
+                }
+            }
+            
+            async generateQRCode() {
+                try {
+                    this.log('📱 Generating QR code...');
+                    const response = await fetch('/qr');
+                    const data = await response.json();
+                    
+                    this.qrCodeDiv.innerHTML = `
+                        <h3>📱 Scan with your phone:</h3>
+                        <img src="${data.qrCode}" alt="QR Code">
+                        <p>Or visit: <a href="${data.phoneUrl}" target="_blank">${data.phoneUrl}</a></p>
+                    `;
+                    
+                    this.log('✅ QR code generated');
+                } catch (error) {
+                    this.log('❌ QR code generation failed: ' + error.message);
+                }
+            }
+            
+            async handleOffer(offer) {
+                try {
+                    // Create RTCPeerConnection
+                    this.peerConnection = new RTCPeerConnection({
+                        iceServers: [
+                            { urls: 'stun:stun.l.google.com:19302' },
+                            { urls: 'stun:stun1.l.google.com:19302' }
+                        ]
+                    });
+                    
+                    // Handle incoming stream
+                    this.peerConnection.ontrack = (event) => {
+                        this.log('📺 Received remote stream');
+                        this.remoteVideo.srcObject = event.streams[0];
+                        this.updateStatus('Phone stream active!', 'success');
+                        this.toggleDetectionBtn.disabled = false;
+                        this.setupDetectionCanvas();
+                    };
+                    
+                    // Handle ICE candidates
+                    this.peerConnection.onicecandidate = (event) => {
+                        if (event.candidate) {
+                            this.log('🧊 Sending ICE candidate');
+                            this.socket.emit('ice-candidate', event.candidate);
+                        }
+                    };
+                    
+                    // Handle connection state changes
+                    this.peerConnection.onconnectionstatechange = () => {
+                        const state = this.peerConnection.connectionState;
+                        this.log(`🔗 Connection state: ${state}`);
+                        
+                        if (state === 'connected') {
+                            this.updateStatus('Connected to phone!', 'success');
+                        } else if (state === 'disconnected' || state === 'failed') {
+                            this.updateStatus('Connection lost', 'error');
+                            this.cleanup();
+                        }
+                    };
+                    
+                    // Set remote description and create answer
+                    await this.peerConnection.setRemoteDescription(offer);
+                    const answer = await this.peerConnection.createAnswer();
+                    await this.peerConnection.setLocalDescription(answer);
+                    
+                    this.log('📤 Sending answer to phone');
+                    this.socket.emit('answer', answer);
+                    
+                } catch (error) {
+                    this.log('❌ Offer handling error: ' + error.message);
+                }
+            }
+            
+            async handleIceCandidate(candidate) {
+                try {
+                    if (this.peerConnection) {
+                        await this.peerConnection.addIceCandidate(candidate);
+                        this.log('✅ ICE candidate added');
+                    }
+                } catch (error) {
+                    this.log('❌ ICE candidate error: ' + error.message);
+                }
+            }
+            
+            setupDetectionCanvas() {
+                this.remoteVideo.addEventListener('loadedmetadata', () => {
+                    this.detectionCanvas.width = this.remoteVideo.videoWidth;
+                    this.detectionCanvas.height = this.remoteVideo.videoHeight;
+                    this.log(`📐 Canvas size: ${this.detectionCanvas.width}x${this.detectionCanvas.height}`);
+                });
+            }
+            
+            toggleDetection() {
+                if (this.isDetectionActive) {
+                    this.stopDetection();
+                } else {
+                    this.startDetection();
+                }
+            }
+            
+            startDetection() {
+                this.isDetectionActive = true;
+                this.toggleDetectionBtn.textContent = 'Stop Detection';
+                this.toggleDetectionBtn.className = 'btn danger';
+                this.log('🎯 Starting object detection...');
+                
+                // Simple detection simulation - replace with actual ML inference
+                this.detectionInterval = setInterval(() => {
+                    this.processFrame();
+                }, 100); // 10 FPS
+            }
+            
+            stopDetection() {
+                this.isDetectionActive = false;
+                this.toggleDetectionBtn.textContent = 'Start Detection';
+                this.toggleDetectionBtn.className = 'btn';
+                this.log('🛑 Stopping object detection...');
+                
+                if (this.detectionInterval) {
+                    clearInterval(this.detectionInterval);
+                    this.detectionInterval = null;
+                }
+                
+                this.ctx.clearRect(0, 0, this.detectionCanvas.width, this.detectionCanvas.height);
+            }
+            
+            processFrame() {
+                if (!this.remoteVideo.videoWidth || !this.remoteVideo.videoHeight) return;
+                
+                // Draw video frame to canvas
+                this.ctx.drawImage(this.remoteVideo, 0, 0, this.detectionCanvas.width, this.detectionCanvas.height);
+                
+                // Simulate object detection (replace with actual ML inference)
+                this.simulateDetection();
+                
+                // Update stats
+                this.updateStats();
+            }
+            
+            simulateDetection() {
+                // This is a placeholder - replace with actual YOLO/ML inference
+                const detections = [
+                    {
+                        class: 'person',
+                        confidence: 0.85,
+                        bbox: [100, 50, 200, 300]
+                    },
+                    {
+                        class: 'phone',
+                        confidence: 0.72,
+                        bbox: [300, 100, 80, 150]
+                    }
+                ];
+                
+                this.drawDetections(detections);
+                this.stats.objects = detections.length;
+                this.stats.confidence = detections.reduce((sum, det) => sum + det.confidence, 0) / detections.length;
+            }
+            
+            drawDetections(detections) {
+                this.ctx.strokeStyle = '#00ff00';
+                this.ctx.lineWidth = 2;
+                this.ctx.font = '16px Arial';
+                this.ctx.fillStyle = '#00ff00';
+                
+                detections.forEach(detection => {
+                    const [x, y, w, h] = detection.bbox;
+                    
+                    // Draw bounding box
+                    this.ctx.strokeRect(x, y, w, h);
+                    
+                    // Draw label
+                    const label = `${detection.class} ${(detection.confidence * 100).toFixed(0)}%`;
+                    this.ctx.fillText(label, x, y - 5);
+                });
+            }
+            
+            updateStats() {
+                this.stats.fps = Math.round(Math.random() * 5 + 8); // Simulate 8-13 FPS
+                this.stats.latency = Math.round(Math.random() * 50 + 30); // Simulate 30-80ms
+                
+                document.getElementById('fpsValue').textContent = this.stats.fps;
+                document.getElementById('objectsValue').textContent = this.stats.objects;
+                document.getElementById('latencyValue').textContent = this.stats.latency;
+                document.getElementById('confidenceValue').textContent = (this.stats.confidence * 100).toFixed(0) + '%';
+            }
+            
+            cleanup() {
+                if (this.peerConnection) {
+                    this.peerConnection.close();
+                    this.peerConnection = null;
+                }
+                
+                this.remoteVideo.srcObject = null;
+                this.toggleDetectionBtn.disabled = true;
+                this.stopDetection();
+            }
+            
+            updateStatus(message, type) {
+                this.statusDiv.textContent = message;
+                this.statusDiv.className = `status ${type}`;
+            }
+            
+            log(message) {
+                const timestamp = new Date().toLocaleTimeString();
+                const logEntry = `[${timestamp}] ${message}`;
+                console.log(logEntry);
+                
+                const logElement = document.createElement('div');
+                logElement.textContent = logEntry;
+                this.logDiv.appendChild(logElement);
+                this.logDiv.scrollTop = this.logDiv.scrollHeight;
+            }
+        }
+        
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new LaptopViewer();
+        });
+    </script>
+</body>
+</html>
