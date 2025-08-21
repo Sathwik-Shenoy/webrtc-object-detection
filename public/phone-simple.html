@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Phone Camera Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #000;
+            color: white;
+        }
+        
+        .container {
+            max-width: 100%;
+            text-align: center;
+        }
+        
+        #video {
+            width: 100%;
+            max-width: 400px;
+            height: auto;
+            border: 2px solid #333;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .btn {
+            padding: 15px 30px;
+            margin: 10px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+            display: inline-block;
+            min-width: 120px;
+        }
+        
+        .btn:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        
+        .btn.danger {
+            background: #dc3545;
+        }
+        
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        
+        .success {
+            background: #28a745;
+        }
+        
+        .error {
+            background: #dc3545;
+        }
+        
+        .info {
+            background: #17a2b8;
+        }
+        
+        #log {
+            text-align: left;
+            background: #222;
+            padding: 10px;
+            border-radius: 5px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📱 Simple Camera Test</h1>
+        
+        <div id="status" class="status info">Ready to start camera</div>
+        
+        <video id="video" autoplay playsinline muted style="display: none;"></video>
+        
+        <div>
+            <button id="startBtn" class="btn">📷 Start Camera</button>
+            <button id="stopBtn" class="btn danger" disabled>⏹️ Stop Camera</button>
+            <button id="switchBtn" class="btn" disabled>🔄 Switch Camera</button>
+        </div>
+        
+        <div id="log"></div>
+    </div>
+
+    <script>
+        let video = document.getElementById('video');
+        let stream = null;
+        let currentFacingMode = 'environment';
+        let startBtn = document.getElementById('startBtn');
+        let stopBtn = document.getElementById('stopBtn');
+        let switchBtn = document.getElementById('switchBtn');
+        let status = document.getElementById('status');
+        let log = document.getElementById('log');
+
+        function addLog(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            log.innerHTML += `[${timestamp}] ${message}<br>`;
+            log.scrollTop = log.scrollHeight;
+            console.log(message);
+        }
+
+        function updateStatus(message, type = 'info') {
+            status.textContent = message;
+            status.className = `status ${type}`;
+            addLog(`STATUS: ${message}`);
+        }
+
+        async function startCamera() {
+            try {
+                updateStatus('Requesting camera access...', 'info');
+                addLog('Starting camera initialization...');
+                
+                // Check if getUserMedia is supported
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    throw new Error('Camera not supported on this device');
+                }
+                
+                // Simple constraints
+                const constraints = {
+                    video: {
+                        facingMode: currentFacingMode,
+                        width: { ideal: 320 },
+                        height: { ideal: 240 }
+                    },
+                    audio: false
+                };
+                
+                addLog(`Requesting camera with facingMode: ${currentFacingMode}`);
+                
+                // Get the stream
+                stream = await navigator.mediaDevices.getUserMedia(constraints);
+                addLog('Camera stream obtained successfully');
+                
+                // Set up video element
+                video.srcObject = stream;
+                
+                video.onloadedmetadata = () => {
+                    addLog(`Video metadata loaded: ${video.videoWidth}x${video.videoHeight}`);
+                    video.style.display = 'block';
+                    
+                    // Enable controls
+                    startBtn.disabled = true;
+                    stopBtn.disabled = false;
+                    switchBtn.disabled = false;
+                    
+                    updateStatus(`Camera active: ${video.videoWidth}x${video.videoHeight}`, 'success');
+                };
+                
+                video.onerror = (error) => {
+                    addLog(`Video error: ${error}`);
+                    updateStatus('Video playback failed', 'error');
+                };
+                
+                // Add timeout for safety
+                setTimeout(() => {
+                    if (video.style.display === 'none') {
+                        addLog('TIMEOUT: Video did not load within 5 seconds');
+                        updateStatus('Camera initialization timeout', 'error');
+                    }
+                }, 5000);
+                
+            } catch (error) {
+                addLog(`Camera error: ${error.name} - ${error.message}`);
+                
+                let errorMessage = 'Camera failed to start';
+                if (error.name === 'NotAllowedError') {
+                    errorMessage = 'Camera permission denied';
+                } else if (error.name === 'NotFoundError') {
+                    errorMessage = 'No camera found';
+                } else if (error.name === 'OverconstrainedError') {
+                    errorMessage = 'Camera constraints not supported';
+                }
+                
+                updateStatus(errorMessage, 'error');
+            }
+        }
+
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => {
+                    track.stop();
+                    addLog(`Stopped track: ${track.kind}`);
+                });
+                stream = null;
+            }
+            
+            video.srcObject = null;
+            video.style.display = 'none';
+            
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+            switchBtn.disabled = true;
+            
+            updateStatus('Camera stopped', 'info');
+        }
+
+        async function switchCamera() {
+            addLog('Switching camera...');
+            currentFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment';
+            
+            stopCamera();
+            
+            // Wait a bit before starting again
+            setTimeout(() => {
+                startCamera();
+            }, 500);
+        }
+
+        // Event listeners
+        startBtn.onclick = startCamera;
+        stopBtn.onclick = stopCamera;
+        switchBtn.onclick = switchCamera;
+
+        addLog('Simple camera test page loaded');
+        updateStatus('Click "Start Camera" to begin', 'info');
+    </script>
+</body>
+</html>

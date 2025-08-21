@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phone Camera Stream</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #000;
+            color: white;
+        }
+        
+        .container {
+            max-width: 100%;
+            text-align: center;
+        }
+        
+        #video {
+            width: 100%;
+            max-width: 400px;
+            height: auto;
+            border: 2px solid #333;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .btn {
+            padding: 15px 30px;
+            margin: 10px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+            display: inline-block;
+            min-width: 120px;
+        }
+        
+        .btn:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        
+        .btn.danger {
+            background: #dc3545;
+        }
+        
+        .btn.success {
+            background: #28a745;
+        }
+        
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+        
+        .status.info {
+            background: #17a2b8;
+        }
+        
+        .status.success {
+            background: #28a745;
+        }
+        
+        .status.error {
+            background: #dc3545;
+        }
+        
+        .status.warning {
+            background: #ffc107;
+            color: #000;
+        }
+        
+        .controls {
+            margin: 20px 0;
+        }
+        
+        #log {
+            text-align: left;
+            background: #222;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📱 Phone Camera Stream</h1>
+        
+        <div id="status" class="status info">
+            Initializing...
+        </div>
+        
+        <video id="video" autoplay playsinline muted></video>
+        
+        <div class="controls">
+            <button id="startBtn" class="btn">Start Camera</button>
+            <button id="connectBtn" class="btn" disabled>Connect to Laptop</button>
+            <button id="stopBtn" class="btn danger" disabled>Stop</button>
+        </div>
+        
+        <div id="log"></div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        class PhoneStreamer {
+            constructor() {
+                this.video = document.getElementById('video');
+                this.startBtn = document.getElementById('startBtn');
+                this.connectBtn = document.getElementById('connectBtn');
+                this.stopBtn = document.getElementById('stopBtn');
+                this.statusDiv = document.getElementById('status');
+                this.logDiv = document.getElementById('log');
+                
+                this.stream = null;
+                this.socket = null;
+                this.peerConnection = null;
+                this.isConnected = false;
+                
+                this.setupEventListeners();
+                this.initSocket();
+            }
+            
+            setupEventListeners() {
+                this.startBtn.addEventListener('click', () => this.startCamera());
+                this.connectBtn.addEventListener('click', () => this.connectToLaptop());
+                this.stopBtn.addEventListener('click', () => this.stop());
+            }
+            
+            initSocket() {
+                try {
+                    this.socket = io({
+                        transports: ['websocket', 'polling']
+                    });
+                    
+                    this.socket.on('connect', () => {
+                        this.log('✅ Connected to server');
+                        this.updateStatus('Connected to server', 'success');
+                    });
+                    
+                    this.socket.on('disconnect', () => {
+                        this.log('❌ Disconnected from server');
+                        this.updateStatus('Disconnected from server', 'error');
+                    });
+                    
+                    this.socket.on('answer', (answer) => {
+                        this.log('📥 Received answer from laptop');
+                        this.handleAnswer(answer);
+                    });
+                    
+                    this.socket.on('ice-candidate', (candidate) => {
+                        this.log('🧊 Received ICE candidate');
+                        this.handleIceCandidate(candidate);
+                    });
+                    
+                } catch (error) {
+                    this.log('❌ Socket connection failed: ' + error.message);
+                    this.updateStatus('Connection failed', 'error');
+                }
+            }
+            
+            async startCamera() {
+                try {
+                    this.log('📹 Starting camera...');
+                    this.updateStatus('Starting camera...', 'info');
+                    
+                    const constraints = {
+                        video: {
+                            facingMode: 'environment', // Back camera
+                            width: { ideal: 1280 },
+                            height: { ideal: 720 }
+                        },
+                        audio: false
+                    };
+                    
+                    this.stream = await navigator.mediaDevices.getUserMedia(constraints);
+                    this.video.srcObject = this.stream;
+                    
+                    this.log('✅ Camera started successfully');
+                    this.updateStatus('Camera ready', 'success');
+                    
+                    this.startBtn.disabled = true;
+                    this.connectBtn.disabled = false;
+                    this.stopBtn.disabled = false;
+                    
+                } catch (error) {
+                    this.log('❌ Camera error: ' + error.message);
+                    this.updateStatus('Camera failed: ' + error.message, 'error');
+                }
+            }
+            
+            async connectToLaptop() {
+                try {
+                    this.log('🔗 Connecting to laptop...');
+                    this.updateStatus('Connecting to laptop...', 'info');
+                    
+                    if (!this.stream) {
+                        throw new Error('No camera stream available');
+                    }
+                    
+                    // Create RTCPeerConnection
+                    this.peerConnection = new RTCPeerConnection({
+                        iceServers: [
+                            { urls: 'stun:stun.l.google.com:19302' },
+                            { urls: 'stun:stun1.l.google.com:19302' }
+                        ]
+                    });
+                    
+                    // Add stream to peer connection
+                    this.stream.getTracks().forEach(track => {
+                        this.peerConnection.addTrack(track, this.stream);
+                    });
+                    
+                    // Handle ICE candidates
+                    this.peerConnection.onicecandidate = (event) => {
+                        if (event.candidate) {
+                            this.log('🧊 Sending ICE candidate');
+                            this.socket.emit('ice-candidate', event.candidate);
+                        }
+                    };
+                    
+                    // Handle connection state changes
+                    this.peerConnection.onconnectionstatechange = () => {
+                        const state = this.peerConnection.connectionState;
+                        this.log(`🔗 Connection state: ${state}`);
+                        
+                        if (state === 'connected') {
+                            this.updateStatus('Connected to laptop!', 'success');
+                            this.isConnected = true;
+                            this.connectBtn.disabled = true;
+                        } else if (state === 'disconnected' || state === 'failed') {
+                            this.updateStatus('Connection lost', 'error');
+                            this.isConnected = false;
+                        }
+                    };
+                    
+                    // Create and send offer
+                    const offer = await this.peerConnection.createOffer();
+                    await this.peerConnection.setLocalDescription(offer);
+                    
+                    this.log('📤 Sending offer to laptop');
+                    this.socket.emit('offer', offer);
+                    this.socket.emit('phone-ready');
+                    
+                } catch (error) {
+                    this.log('❌ Connection error: ' + error.message);
+                    this.updateStatus('Connection failed: ' + error.message, 'error');
+                }
+            }
+            
+            async handleAnswer(answer) {
+                try {
+                    await this.peerConnection.setRemoteDescription(answer);
+                    this.log('✅ Answer processed successfully');
+                } catch (error) {
+                    this.log('❌ Answer error: ' + error.message);
+                }
+            }
+            
+            async handleIceCandidate(candidate) {
+                try {
+                    await this.peerConnection.addIceCandidate(candidate);
+                    this.log('✅ ICE candidate added');
+                } catch (error) {
+                    this.log('❌ ICE candidate error: ' + error.message);
+                }
+            }
+            
+            stop() {
+                this.log('🛑 Stopping...');
+                
+                if (this.stream) {
+                    this.stream.getTracks().forEach(track => track.stop());
+                    this.stream = null;
+                }
+                
+                if (this.peerConnection) {
+                    this.peerConnection.close();
+                    this.peerConnection = null;
+                }
+                
+                if (this.socket) {
+                    this.socket.emit('phone-disconnected');
+                }
+                
+                this.video.srcObject = null;
+                this.isConnected = false;
+                
+                this.startBtn.disabled = false;
+                this.connectBtn.disabled = true;
+                this.stopBtn.disabled = true;
+                
+                this.updateStatus('Stopped', 'info');
+                this.log('✅ Stopped successfully');
+            }
+            
+            updateStatus(message, type) {
+                this.statusDiv.textContent = message;
+                this.statusDiv.className = `status ${type}`;
+            }
+            
+            log(message) {
+                const timestamp = new Date().toLocaleTimeString();
+                const logEntry = `[${timestamp}] ${message}`;
+                console.log(logEntry);
+                
+                const logElement = document.createElement('div');
+                logElement.textContent = logEntry;
+                this.logDiv.appendChild(logElement);
+                this.logDiv.scrollTop = this.logDiv.scrollHeight;
+            }
+        }
+        
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new PhoneStreamer();
+        });
+    </script>
+</body>
+</html>
