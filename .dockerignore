@@ -1,0 +1,57 @@
+# Logs
+logs/
+*.log
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# Optional npm cache directory
+.npm
+
+# Environment variables
+.env
+.env.*
+
+# Temporary files
+tmp/
+temp/
+.tmp/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Test and benchmark results
+bench/results/
+test-results/
+coverage/
+metrics*.json
+
+# Build artifacts
+dist/
+build/
+
+# Model files (too large)
+public/models/*.onnx
+
+# ngrok
+ngrok.log
