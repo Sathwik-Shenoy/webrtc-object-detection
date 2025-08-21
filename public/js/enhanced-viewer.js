@@ -603,15 +603,15 @@ class EnhancedDetectionViewer {
     
     async loadQRCode() {
         try {
-            const response = await fetch('/api/qr-code');
+            const response = await fetch('/qr');
             const data = await response.json();
             
             const qrContainer = document.getElementById('qrContainer');
-            if (qrContainer && data.qrCodeDataURL) {
+            if (qrContainer && data.qrCode) {
                 qrContainer.innerHTML = `
                     <div class="qr-section">
                         <h3>📱 Scan QR Code with Your Phone</h3>
-                        <img src="${data.qrCodeDataURL}" alt="QR Code" style="max-width: 200px;">
+                        <img src="${data.qrCode}" alt="QR Code" style="max-width: 200px;">
                         <p>Or visit: <strong>${data.url}</strong></p>
                     </div>
                 `;
