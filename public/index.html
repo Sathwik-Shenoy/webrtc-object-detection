@@ -201,23 +201,7 @@
                 <a href="/phone-connect.html" class="btn secondary">Connect Mobile</a>
             </div>
             
-            <div class="option-card">
-                <div class="option-icon">🎯</div>
-                <div class="option-title">3D AR View</div>
-                <div class="option-description">
-                    Experience advanced 3D augmented reality object detection with spatial tracking and dimensional analysis.
-                </div>
-                <a href="/laptop-viewer.html?mode=3d" class="btn tertiary">Launch 3D View</a>
-            </div>
-            
-            <div class="option-card">
-                <div class="option-icon">📊</div>
-                <div class="option-title">Analytics Dashboard</div>
-                <div class="option-description">
-                    View comprehensive analytics, performance metrics, and detailed detection statistics in real-time.
-                </div>
-                <a href="/laptop-viewer.html?mode=analytics" class="btn quaternary">Open Dashboard</a>
-            </div>
+
         </div>
         
         <div class="features">
@@ -259,17 +243,7 @@
                     <p>Easy mobile connection via QR code scanning - no manual URL typing needed.</p>
                 </div>
                 
-                <div class="feature">
-                    <div class="feature-icon">🎮</div>
-                    <h3>3D AR Mode</h3>
-                    <p>Advanced augmented reality with 3D bounding boxes and spatial object tracking.</p>
-                </div>
-                
-                <div class="feature">
-                    <div class="feature-icon">📈</div>
-                    <h3>Analytics Dashboard</h3>
-                    <p>Comprehensive statistics, charts, and performance analysis tools.</p>
-                </div>
+
             </div>
         </div>
     </div>
@@ -412,16 +386,6 @@
             pointer-events: none;
         }
         
-        .ar-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 2;
-        }
-        
         .advanced-controls {
             display: flex;
             gap: 10px;
@@ -451,10 +415,6 @@
         .btn-feature.active {
             background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
             box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
-        }
-        
-        .dashboard-container {
-            margin: 20px 0;
         }
         
         .features-status {
@@ -646,7 +606,6 @@
         <div class="video-container" id="videoContainer">
             <video id="remoteVideo" autoplay playsinline muted></video>
             <canvas id="overlayCanvas" class="overlay-canvas"></canvas>
-            <canvas id="ar3dCanvas" class="ar-overlay"></canvas>
             <div id="detectionInfo" class="detection-info" style="display: none;">
                 Detections: <span id="detectionCount">0</span><br>
                 Latency: <span id="latencyDisplay">0ms</span><br>
@@ -662,9 +621,7 @@
             <button id="toggleOverlayBtn" class="btn">👁️ Toggle Overlay</button>
             <button id="metricsBtn" class="btn">📊 Show Metrics</button>
             <div class="advanced-controls">
-                <button id="toggle3D" class="btn btn-feature">🎯 3D Mode</button>
                 <button id="toggleTracking" class="btn btn-feature">🔍 Tracking</button>
-                <button id="toggleAnalytics" class="btn btn-feature">📊 Analytics</button>
                 <button id="toggleAlerts" class="btn btn-feature">🚨 Alerts</button>
             </div>
         </div>        <div class="stats">
@@ -690,19 +647,13 @@
             </div>
         </div>
 
-        <!-- Analytics Dashboard Container -->
-        <div id="analyticsDashboard" class="dashboard-container hidden"></div>
+
 
         <!-- Advanced Features Status -->
         <div id="featuresStatus" class="features-status hidden">
             <div class="feature-indicator" id="trackingIndicator">
                 <span class="indicator-icon">🔍</span>
                 <span class="indicator-text">Object Tracking</span>
-                <span class="indicator-status">OFF</span>
-            </div>
-            <div class="feature-indicator" id="ar3dIndicator">
-                <span class="indicator-icon">🎯</span>
-                <span class="indicator-text">AR 3D Mode</span>
                 <span class="indicator-status">OFF</span>
             </div>
             <div class="feature-indicator" id="alertsIndicator">
@@ -733,9 +684,6 @@
     <script src="/js/utils.js"></script>
     <!-- Enhanced Features -->
     <script src="/js/object-tracker.js"></script>
-    <script src="/js/analytics-dashboard.js"></script>
-    <script src="/js/smart-alerts.js"></script>
-    <script src="/js/ar-3d-boxes.js"></script>
     <!-- Include enhanced viewer logic -->
     <script src="/js/enhanced-viewer.js"></script>
 </body>

@@ -5,23 +5,18 @@ class EnhancedDetectionViewer {
         this.socket = null;
         this.remoteVideo = null;
         this.overlayCanvas = null;
-        this.ar3dCanvas = null;
         this.isConnected = false;
         this.showOverlay = true;
         this.frameCount = 0;
         
         // Enhanced features
         this.objectTracker = null;
-        this.analyticsDashboard = null;
         this.smartAlerts = null;
-        this.ar3dRenderer = null;
         
         // Feature toggles
         this.features = {
             tracking: false,
-            analytics: false,
-            alerts: true,
-            ar3d: false
+            alerts: true
         };
         
         // Initialize components
@@ -48,7 +43,6 @@ class EnhancedDetectionViewer {
         // Get DOM elements
         this.remoteVideo = document.getElementById('remoteVideo');
         this.overlayCanvas = document.getElementById('overlayCanvas');
-        this.ar3dCanvas = document.getElementById('ar3dCanvas');
         
         // Setup basic event listeners
         document.getElementById('connectBtn').onclick = () => this.connectPhone();
@@ -58,9 +52,7 @@ class EnhancedDetectionViewer {
         document.getElementById('metricsBtn').onclick = () => this.showMetrics();
         
         // Setup enhanced feature toggles
-        document.getElementById('toggle3D').onclick = () => this.toggleAR3D();
         document.getElementById('toggleTracking').onclick = () => this.toggleTracking();
-        document.getElementById('toggleAnalytics').onclick = () => this.toggleAnalytics();
         document.getElementById('toggleAlerts').onclick = () => this.toggleAlerts();
         
         // Setup video element
@@ -86,29 +78,14 @@ class EnhancedDetectionViewer {
                 minHits: 3,
                 iouThreshold: 0.3
             });
-            
-            // Initialize Analytics Dashboard
-            this.analyticsDashboard = new AnalyticsDashboard('analyticsDashboard', {
-                updateInterval: 1000,
-                historyLength: 100
-            });
-            
+
             // Initialize Smart Alerts
             this.smartAlerts = new SmartAlerts({
                 alertTypes: ['security', 'performance', 'detection', 'system'],
                 soundEnabled: true,
                 vibrationEnabled: true
             });
-            
-            // Initialize AR 3D Renderer
-            this.ar3dRenderer = new AR3DBoundingBox('ar3dCanvas', {
-                perspective: 0.7,
-                depth: 50,
-                animationSpeed: 0.1,
-                glowEffect: true,
-                particleEffects: true
-            });
-            
+
             this.logger.info('All enhanced features initialized successfully');
         } catch (error) {
             this.logger.error(`Enhanced features initialization failed: ${error.message}`);
@@ -124,16 +101,6 @@ class EnhancedDetectionViewer {
         if (this.overlayCanvas) {
             this.overlayCanvas.width = rect.width;
             this.overlayCanvas.height = rect.height;
-        }
-        
-        // Resize AR 3D canvas
-        if (this.ar3dCanvas) {
-            this.ar3dCanvas.width = rect.width;
-            this.ar3dCanvas.height = rect.height;
-            
-            if (this.ar3dRenderer) {
-                this.ar3dRenderer.resize();
-            }
         }
     }
     
@@ -210,20 +177,7 @@ class EnhancedDetectionViewer {
                     trackingCount.textContent = this.objectTracker.getActiveTracks().length;
                 }
             }
-            
-            // Update analytics dashboard
-            if (this.features.analytics && this.analyticsDashboard) {
-                const analyticsData = {
-                    fps: this.stats.getCurrentFPS(),
-                    latency: result.latency || 0,
-                    detections: processedDetections,
-                    confidence: this.calculateAverageConfidence(processedDetections),
-                    trackingStats: this.features.tracking ? this.objectTracker.getStats() : null,
-                    timestamp: Date.now()
-                };
-                this.analyticsDashboard.updateMetrics(analyticsData);
-            }
-            
+
             // Check smart alerts
             if (this.features.alerts && this.smartAlerts) {
                 const alertData = {
@@ -236,14 +190,9 @@ class EnhancedDetectionViewer {
                 };
                 this.smartAlerts.update(alertData);
             }
-            
+
             // Update display
             this.drawDetections(processedDetections);
-            
-            // Update AR 3D if enabled
-            if (this.features.ar3d && this.ar3dRenderer) {
-                this.ar3dRenderer.updateDetections(processedDetections, this.remoteVideo);
-            }
             
             // Update UI metrics
             this.updateDetectionInfo(processedDetections.length, result.latency);
@@ -387,21 +336,6 @@ class EnhancedDetectionViewer {
         }
     }
     
-    toggleAnalytics() {
-        this.features.analytics = !this.features.analytics;
-        this.updateFeatureIndicator('analytics', this.features.analytics);
-        
-        const dashboard = document.getElementById('analyticsDashboard');
-        if (this.features.analytics) {
-            dashboard.classList.remove('hidden');
-            document.getElementById('featuresStatus').classList.remove('hidden');
-            this.logger.info('Analytics dashboard enabled');
-        } else {
-            dashboard.classList.add('hidden');
-            this.logger.info('Analytics dashboard disabled');
-        }
-    }
-    
     toggleAlerts() {
         this.features.alerts = !this.features.alerts;
         this.updateFeatureIndicator('alerts', this.features.alerts);
@@ -413,22 +347,6 @@ class EnhancedDetectionViewer {
             if (this.smartAlerts) {
                 this.smartAlerts.clearAllAlerts();
             }
-        }
-    }
-    
-    toggleAR3D() {
-        this.features.ar3d = !this.features.ar3d;
-        this.updateFeatureIndicator('ar3d', this.features.ar3d);
-        
-        if (this.features.ar3d) {
-            this.ar3dCanvas.style.display = 'block';
-            this.logger.info('AR 3D mode enabled');
-        } else {
-            this.ar3dCanvas.style.display = 'none';
-            if (this.ar3dRenderer) {
-                this.ar3dRenderer.clear();
-            }
-            this.logger.info('AR 3D mode disabled');
         }
     }
     
@@ -474,12 +392,7 @@ class EnhancedDetectionViewer {
             if (this.showOverlay && this.overlayCanvas) {
                 ctx.drawImage(this.overlayCanvas, 0, 0, canvas.width, canvas.height);
             }
-            
-            // Draw AR 3D if enabled
-            if (this.features.ar3d && this.ar3dCanvas) {
-                ctx.drawImage(this.ar3dCanvas, 0, 0, canvas.width, canvas.height);
-            }
-            
+
             // Add metadata
             ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
             ctx.fillRect(10, 10, 300, 60);
@@ -534,11 +447,8 @@ class EnhancedDetectionViewer {
         if (this.objectTracker) {
             this.objectTracker.reset();
         }
-        if (this.ar3dRenderer) {
-            this.ar3dRenderer.clear();
-        }
     }
-    
+
     toggleOverlay() {
         this.showOverlay = !this.showOverlay;
         const button = document.getElementById('toggleOverlayBtn');
