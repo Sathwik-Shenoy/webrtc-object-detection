@@ -115,17 +115,34 @@ class PhoneStreamer {
                 throw new Error('Camera not supported');
             }
             
-            // Try to get camera stream
-            const constraints = DeviceUtils.getOptimalVideoConstraints('low-resource');
-            const stream = await navigator.mediaDevices.getUserMedia(constraints);
+            this.logger.info('Requesting camera permissions...');
+            
+            // Try to get camera stream with more basic constraints first
+            const basicConstraints = {
+                video: {
+                    facingMode: 'environment',
+                    width: { ideal: 320 },
+                    height: { ideal: 240 }
+                },
+                audio: false
+            };
+            
+            this.logger.info('Attempting to access camera...');
+            const stream = await navigator.mediaDevices.getUserMedia(basicConstraints);
             
             // If successful, we have permission
             this.localStream = stream;
+            this.logger.info('Camera access granted, setting up video...');
             this.setupVideo();
             
         } catch (error) {
+            this.logger.error(`Camera error: ${error.name} - ${error.message}`);
             if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
                 this.showPermissionPrompt();
+            } else if (error.name === 'NotFoundError') {
+                this.showError('No camera found on this device');
+            } else if (error.name === 'OverconstrainedError') {
+                this.showError('Camera constraints not supported');
             } else {
                 this.showError(`Camera error: ${error.message}`);
             }
@@ -142,38 +159,83 @@ class PhoneStreamer {
             DOMUtils.setElementDisplay('permissionPrompt', 'none');
             DOMUtils.setElementDisplay('loadingScreen', 'block');
             
-            const constraints = DeviceUtils.getOptimalVideoConstraints('low-resource');
-            this.localStream = await navigator.mediaDevices.getUserMedia(constraints);
+            this.logger.info('User requested camera permission...');
+            
+            const basicConstraints = {
+                video: {
+                    facingMode: 'environment',
+                    width: { ideal: 320 },
+                    height: { ideal: 240 }
+                },
+                audio: false
+            };
+            
+            this.localStream = await navigator.mediaDevices.getUserMedia(basicConstraints);
+            this.logger.info('Camera permission granted, setting up video...');
             
             this.setupVideo();
         } catch (error) {
+            this.logger.error(`Permission request failed: ${error.name} - ${error.message}`);
             this.showError(`Permission denied: ${error.message}`);
         }
     }
     
     setupVideo() {
-        if (!this.localStream || !this.localVideo) return;
+        if (!this.localStream || !this.localVideo) {
+            this.logger.error('setupVideo: Missing stream or video element');
+            return;
+        }
         
+        this.logger.info('Setting up video element...');
         this.localVideo.srcObject = this.localStream;
         
         this.localVideo.onloadedmetadata = () => {
+            this.logger.info('Video metadata loaded');
             const { videoWidth, videoHeight } = this.localVideo;
+            this.logger.info(`Video dimensions: ${videoWidth}x${videoHeight}`);
+            
             DOMUtils.updateElement('resolutionDisplay', `${videoWidth}x${videoHeight}`);
             
             // Setup overlay canvas
-            this.overlayCanvas.width = videoWidth;
-            this.overlayCanvas.height = videoHeight;
+            if (this.overlayCanvas) {
+                this.overlayCanvas.width = videoWidth;
+                this.overlayCanvas.height = videoHeight;
+                this.logger.info('Overlay canvas configured');
+            }
             
+            // Hide loading and show video
             DOMUtils.setElementDisplay('loadingScreen', 'none');
             DOMUtils.setElementDisplay('videoContainer', 'block');
             DOMUtils.setElementDisplay('stats', 'block');
             
             // Enable controls
-            document.getElementById('startBtn').disabled = false;
-            document.getElementById('switchCameraBtn').disabled = false;
+            const startBtn = document.getElementById('startBtn');
+            const switchBtn = document.getElementById('switchCameraBtn');
+            
+            if (startBtn) {
+                startBtn.disabled = false;
+                this.logger.info('Start button enabled');
+            }
+            if (switchBtn) {
+                switchBtn.disabled = false;
+                this.logger.info('Switch camera button enabled');
+            }
             
             this.logger.info(`Video setup complete: ${videoWidth}x${videoHeight}`);
         };
+        
+        this.localVideo.onerror = (error) => {
+            this.logger.error('Video element error:', error);
+            this.showError('Video playback failed');
+        };
+        
+        // Add a timeout to catch cases where onloadedmetadata never fires
+        setTimeout(() => {
+            if (DOMUtils.getElementDisplay('loadingScreen') !== 'none') {
+                this.logger.error('Video setup timeout - metadata never loaded');
+                this.showError('Camera initialization timeout');
+            }
+        }, 10000); // 10 second timeout
     }
     
     async startStreaming() {

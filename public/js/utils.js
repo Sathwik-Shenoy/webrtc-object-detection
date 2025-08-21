@@ -302,6 +302,11 @@ const DOMUtils = {
         }
     },
     
+    getElementDisplay: (id) => {
+        const element = document.getElementById(id);
+        return element ? element.style.display : 'none';
+    },
+    
     addClass: (id, className) => {
         const element = document.getElementById(id);
         if (element) {
