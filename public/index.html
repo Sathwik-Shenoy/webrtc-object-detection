@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>WebRTC Object Detection</title>
-    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/style.css" />
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -14,37 +14,13 @@
             min-height: 100vh;
             color: white;
         }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            text-align: center;
-        }
-        
-        .header {
-            margin-bottom: 50px;
-        }
-        
-        .header h1 {
-            font-size: 3em;
-            margin-bottom: 20px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-        
-        .header p {
-            font-size: 1.2em;
-            opacity: 0.9;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-        
-        .options {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
-            margin-top: 50px;
-        }
-        
+
+        .container { max-width: 1200px; margin: 0 auto; text-align: center; }
+        .header { margin-bottom: 50px; }
+        .header h1 { font-size: 3em; margin-bottom: 20px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .header p { font-size: 1.2em; opacity: 0.9; max-width: 600px; margin: 0 auto; }
+
+        .options { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; margin-top: 50px; }
         .option-card {
             background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(10px);
@@ -53,125 +29,29 @@
             transition: transform 0.3s ease, box-shadow 0.3s ease;
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
-        
-        .option-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
-        }
-        
-        .option-icon {
-            font-size: 4em;
-            margin-bottom: 20px;
-        }
-        
-        .option-title {
-            font-size: 1.5em;
-            margin-bottom: 15px;
-            font-weight: bold;
-        }
-        
-        .option-description {
-            margin-bottom: 25px;
-            opacity: 0.8;
-            line-height: 1.6;
-        }
-        
-        .btn {
-            display: inline-block;
-            padding: 15px 30px;
-            background: #007bff;
-            color: white;
-            text-decoration: none;
-            border-radius: 50px;
-            font-weight: bold;
-            transition: all 0.3s ease;
-            border: none;
-            cursor: pointer;
-            font-size: 1em;
-        }
-        
-        .btn:hover {
-            background: #0056b3;
-            transform: scale(1.05);
-        }
-        
-        .btn.primary {
-            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
-        }
-        
-        .btn.primary:hover {
-            background: linear-gradient(45deg, #ee5a24, #ff6b6b);
-        }
-        
-        .btn.secondary {
-            background: linear-gradient(45deg, #4ecdc4, #44a08d);
-        }
-        
-        .btn.secondary:hover {
-            background: linear-gradient(45deg, #44a08d, #4ecdc4);
-        }
-        
-        .btn.tertiary {
-            background: linear-gradient(45deg, #a8e6cf, #7fcdcd);
-        }
-        
-        .btn.tertiary:hover {
-            background: linear-gradient(45deg, #7fcdcd, #a8e6cf);
-        }
-        
-        .btn.quaternary {
-            background: linear-gradient(45deg, #ffd93d, #ff9500);
-        }
-        
-        .btn.quaternary:hover {
-            background: linear-gradient(45deg, #ff9500, #ffd93d);
-        }
-        
-        .features {
-            margin-top: 60px;
-            text-align: left;
-        }
-        
-        .features h2 {
-            text-align: center;
-            margin-bottom: 40px;
-            font-size: 2.5em;
-        }
-        
-        .feature-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-        }
-        
-        .feature {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 20px;
-            border-radius: 15px;
-            backdrop-filter: blur(10px);
-        }
-        
-        .feature-icon {
-            font-size: 2em;
-            margin-bottom: 10px;
-        }
-        
-        .feature h3 {
-            margin-bottom: 10px;
-        }
-        
+        .option-card:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2); }
+        .option-icon { font-size: 4em; margin-bottom: 20px; }
+        .option-title { font-size: 1.5em; margin-bottom: 15px; font-weight: bold; }
+        .option-description { margin-bottom: 25px; opacity: 0.8; line-height: 1.6; }
+
+        .btn { display: inline-block; padding: 15px 30px; background: #007bff; color: white; text-decoration: none; border-radius: 50px; font-weight: bold; transition: all 0.3s ease; border: none; cursor: pointer; font-size: 1em; }
+        .btn:hover { background: #0056b3; transform: scale(1.05); }
+        .btn.primary { background: linear-gradient(45deg, #ff6b6b, #ee5a24); }
+        .btn.primary:hover { background: linear-gradient(45deg, #ee5a24, #ff6b6b); }
+        .btn.secondary { background: linear-gradient(45deg, #4ecdc4, #44a08d); }
+        .btn.secondary:hover { background: linear-gradient(45deg, #44a08d, #4ecdc4); }
+
+        .features { margin-top: 60px; text-align: left; }
+        .features h2 { text-align: center; margin-bottom: 40px; font-size: 2.5em; }
+        .feature-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+        .feature { background: rgba(255, 255, 255, 0.1); padding: 20px; border-radius: 15px; backdrop-filter: blur(10px); }
+        .feature-icon { font-size: 2em; margin-bottom: 10px; }
+        .feature h3 { margin-bottom: 10px; }
+
         @media (max-width: 768px) {
-            .header h1 {
-                font-size: 2em;
-            }
-            
-            .options {
-                grid-template-columns: 1fr;
-            }
-            
-            .option-card {
-                padding: 30px 20px;
-            }
+            .header h1 { font-size: 2em; }
+            .options { grid-template-columns: 1fr; }
+            .option-card { padding: 30px 20px; }
         }
     </style>
 </head>
@@ -181,7 +61,7 @@
             <h1>🎯 WebRTC Object Detection</h1>
             <p>Real-time object detection with your mobile camera streamed to your laptop via WebRTC</p>
         </div>
-        
+
         <div class="options">
             <div class="option-card">
                 <div class="option-icon">💻</div>
@@ -191,142 +71,7 @@
                 </div>
                 <a href="/laptop-viewer.html" class="btn primary">Start Laptop Viewer</a>
             </div>
-            
-            <div class="option-card">
-                <div class="option-icon">📱</div>
-                <div class="option-title">Mobile Camera</div>
-                <div class="option-description">
-                    Connect your mobile device to stream camera feed to the laptop. Scan QR code from laptop viewer for easy connection.
-                </div>
-                <a href="/phone-connect.html" class="btn secondary">Connect Mobile</a>
-            </div>
-            
 
-        </div>
-        
-        <div class="features">
-            <h2>✨ Features</h2>
-            <div class="feature-list">
-                <div class="feature">
-                    <div class="feature-icon">🔒</div>
-                    <h3>HTTPS Secure</h3>
-                    <p>Secure HTTPS connection enables mobile camera access and encrypted data transmission.</p>
-                </div>
-                
-                <div class="feature">
-                    <div class="feature-icon">🚀</div>
-                    <h3>Real-time Streaming</h3>
-                    <p>Low-latency WebRTC peer-to-peer connection for smooth video streaming.</p>
-                </div>
-                
-                <div class="feature">
-                    <div class="feature-icon">🎯</div>
-                    <h3>Object Detection</h3>
-                    <p>AI-powered object recognition with bounding boxes and confidence scores.</p>
-                </div>
-                
-                <div class="feature">
-                    <div class="feature-icon">📊</div>
-                    <h3>Performance Metrics</h3>
-                    <p>Real-time FPS, latency, and detection statistics monitoring.</p>
-                </div>
-                
-                <div class="feature">
-                    <div class="feature-icon">📱</div>
-                    <h3>Mobile Optimized</h3>
-                    <p>Responsive design works seamlessly on mobile devices and tablets.</p>
-                </div>
-                
-                <div class="feature">
-                    <div class="feature-icon">🔗</div>
-                    <h3>QR Code Connect</h3>
-                    <p>Easy mobile connection via QR code scanning - no manual URL typing needed.</p>
-                </div>
-                
-
-            </div>
-        </div>
-    </div>
-</body>
-</html>
-        
-        .btn.primary:hover {
-            background: linear-gradient(45deg, #ee5a24, #ff6b6b);
-        }
-        
-        .btn.secondary {
-            background: linear-gradient(45deg, #4ecdc4, #44a08d);
-        }
-        
-        .btn.secondary:hover {
-            background: linear-gradient(45deg, #44a08d, #4ecdc4);
-        }
-        
-        .features {
-            margin-top: 60px;
-            text-align: left;
-        }
-        
-        .features h2 {
-            text-align: center;
-            margin-bottom: 40px;
-            font-size: 2.5em;
-        }
-        
-        .feature-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-        }
-        
-        .feature {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 20px;
-            border-radius: 15px;
-            backdrop-filter: blur(10px);
-        }
-        
-        .feature-icon {
-            font-size: 2em;
-            margin-bottom: 10px;
-        }
-        
-        .feature h3 {
-            margin-bottom: 10px;
-        }
-        
-        @media (max-width: 768px) {
-            .header h1 {
-                font-size: 2em;
-            }
-            
-            .options {
-                grid-template-columns: 1fr;
-            }
-            
-            .option-card {
-                padding: 30px 20px;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>🎯 WebRTC Object Detection</h1>
-            <p>Real-time object detection with your mobile camera streamed to your laptop via WebRTC</p>
-        </div>
-        
-        <div class="options">
-            <div class="option-card">
-                <div class="option-icon">💻</div>
-                <div class="option-title">Laptop Viewer</div>
-                <div class="option-description">
-                    Start the laptop viewer to receive and display the mobile camera stream with real-time object detection overlay.
-                </div>
-                <a href="/laptop-viewer.html" class="btn primary">Start Laptop Viewer</a>
-            </div>
-            
             <div class="option-card">
                 <div class="option-icon">📱</div>
                 <div class="option-title">Mobile Camera</div>
@@ -336,7 +81,7 @@
                 <a href="/phone-connect.html" class="btn secondary">Connect Mobile</a>
             </div>
         </div>
-        
+
         <div class="features">
             <h2>✨ Features</h2>
             <div class="feature-list">
@@ -345,31 +90,26 @@
                     <h3>HTTPS Secure</h3>
                     <p>Secure HTTPS connection enables mobile camera access and encrypted data transmission.</p>
                 </div>
-                
                 <div class="feature">
                     <div class="feature-icon">🚀</div>
                     <h3>Real-time Streaming</h3>
                     <p>Low-latency WebRTC peer-to-peer connection for smooth video streaming.</p>
                 </div>
-                
                 <div class="feature">
                     <div class="feature-icon">🎯</div>
                     <h3>Object Detection</h3>
                     <p>AI-powered object recognition with bounding boxes and confidence scores.</p>
                 </div>
-                
                 <div class="feature">
                     <div class="feature-icon">📊</div>
                     <h3>Performance Metrics</h3>
                     <p>Real-time FPS, latency, and detection statistics monitoring.</p>
                 </div>
-                
                 <div class="feature">
                     <div class="feature-icon">📱</div>
                     <h3>Mobile Optimized</h3>
                     <p>Responsive design works seamlessly on mobile devices and tablets.</p>
                 </div>
-                
                 <div class="feature">
                     <div class="feature-icon">🔗</div>
                     <h3>QR Code Connect</h3>
@@ -378,313 +118,5 @@
             </div>
         </div>
     </div>
-</body>
-</html>
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-        }
-        
-        .advanced-controls {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-        
-        .btn-feature {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-        }
-        
-        .btn-feature:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-        }
-        
-        .btn-feature.active {
-            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
-            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
-        }
-        
-        .features-status {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin: 20px 0;
-            flex-wrap: wrap;
-        }
-        
-        .feature-indicator {
-            background: rgba(0, 0, 0, 0.1);
-            padding: 10px 15px;
-            border-radius: 25px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 12px;
-            border: 1px solid rgba(0, 0, 0, 0.1);
-        }
-        
-        .indicator-icon {
-            font-size: 14px;
-        }
-        
-        .indicator-status {
-            background: #f44336;
-            color: white;
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-size: 10px;
-            font-weight: bold;
-        }
-        
-        .indicator-status.on {
-            background: #4CAF50;
-        }
-        
-        .controls {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin: 20px 0;
-            flex-wrap: wrap;
-        }
-        
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 6px;
-            background: #007bff;
-            color: white;
-            cursor: pointer;
-            font-size: 14px;
-            transition: background 0.2s;
-        }
-        
-        .btn:hover {
-            background: #0056b3;
-        }
-        
-        .btn:disabled {
-            background: #6c757d;
-            cursor: not-allowed;
-        }
-        
-        .btn.success {
-            background: #28a745;
-        }
-        
-        .btn.danger {
-            background: #dc3545;
-        }
-        
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin: 20px 0;
-        }
-        
-        .stat-card {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
-            border: 1px solid #dee2e6;
-        }
-        
-        .stat-value {
-            font-size: 24px;
-            font-weight: bold;
-            color: #007bff;
-            margin-bottom: 5px;
-        }
-        
-        .stat-label {
-            font-size: 12px;
-            color: #6c757d;
-            text-transform: uppercase;
-        }
-        
-        .qr-section {
-            text-align: center;
-            margin: 20px 0;
-            padding: 20px;
-            background: #e9ecef;
-            border-radius: 8px;
-        }
-        
-        .status {
-            text-align: center;
-            padding: 10px;
-            border-radius: 6px;
-            margin: 10px 0;
-        }
-        
-        .status.connected {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        
-        .status.disconnected {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        
-        .status.connecting {
-            background: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffeaa7;
-        }
-        
-        .detection-info {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 10px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-family: monospace;
-        }
-        
-        .log {
-            background: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 6px;
-            padding: 15px;
-            margin: 20px 0;
-            max-height: 200px;
-            overflow-y: auto;
-            font-family: monospace;
-            font-size: 12px;
-        }
-        
-        .log-entry {
-            margin: 2px 0;
-            padding: 2px 0;
-        }
-        
-        .log-entry.error {
-            color: #dc3545;
-        }
-        
-        .log-entry.info {
-            color: #007bff;
-        }
-        
-        .log-entry.debug {
-            color: #6c757d;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>🚀 WebRTC Object Detection Viewer</h1>
-            <p>Real-time multi-object detection from phone camera</p>
-        </div>
-        
-        <div id="connectionStatus" class="status disconnected">
-            📱 Waiting for phone connection...
-        </div>
-        
-        <div class="video-container" id="videoContainer">
-            <video id="remoteVideo" autoplay playsinline muted></video>
-            <canvas id="overlayCanvas" class="overlay-canvas"></canvas>
-            <div id="detectionInfo" class="detection-info" style="display: none;">
-                Detections: <span id="detectionCount">0</span><br>
-                Latency: <span id="latencyDisplay">0ms</span><br>
-                FPS: <span id="fpsDisplay">0</span><br>
-                Tracks: <span id="trackingCount">0</span>
-            </div>
-        </div>
-
-        <div class="controls">
-            <button id="connectBtn" class="btn">📱 Connect Phone</button>
-            <button id="disconnectBtn" class="btn danger" disabled>🔌 Disconnect</button>
-            <button id="screenshotBtn" class="btn" disabled>📷 Screenshot</button>
-            <button id="toggleOverlayBtn" class="btn">👁️ Toggle Overlay</button>
-            <button id="metricsBtn" class="btn">📊 Show Metrics</button>
-            <div class="advanced-controls">
-                <button id="toggleTracking" class="btn btn-feature">🔍 Tracking</button>
-                <button id="toggleAlerts" class="btn btn-feature">🚨 Alerts</button>
-            </div>
-        </div>        <div class="stats">
-            <div class="stat-card">
-                <div class="stat-value" id="totalFrames">0</div>
-                <div class="stat-label">Total Frames</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="detectedObjects">0</div>
-                <div class="stat-label">Detected Objects</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="averageLatency">0ms</div>
-                <div class="stat-label">Avg Latency</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="currentFPS">0</div>
-                <div class="stat-label">Current FPS</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="activeTracks">0</div>
-                <div class="stat-label">Active Tracks</div>
-            </div>
-        </div>
-
-
-
-        <!-- Advanced Features Status -->
-        <div id="featuresStatus" class="features-status hidden">
-            <div class="feature-indicator" id="trackingIndicator">
-                <span class="indicator-icon">🔍</span>
-                <span class="indicator-text">Object Tracking</span>
-                <span class="indicator-status">OFF</span>
-            </div>
-            <div class="feature-indicator" id="alertsIndicator">
-                <span class="indicator-icon">🚨</span>
-                <span class="indicator-text">Smart Alerts</span>
-                <span class="indicator-status">ON</span>
-            </div>
-        </div>
-        
-        <!-- QR Code Container -->
-        <div id="qrContainer">
-            <div class="qr-section">
-                <h3>📱 Connect Your Phone</h3>
-                <div id="qrCode">Loading QR code...</div>
-                <p>Scan the QR code or open this URL on your phone:</p>
-                <p><strong id="phoneUrl">Loading...</strong></p>
-            </div>
-        </div>
-        
-        <div class="log" id="logContainer">
-            <div class="log-entry info">System initialized. Waiting for connections...</div>
-        </div>
-    </div>
-
-    <!-- Include Socket.IO -->
-    <script src="/socket.io/socket.io.js"></script>
-    <!-- Include utility functions -->
-    <script src="/js/utils.js"></script>
-    <!-- Enhanced Features -->
-    <script src="/js/object-tracker.js"></script>
-    <!-- Include enhanced viewer logic -->
-    <script src="/js/enhanced-viewer.js"></script>
 </body>
 </html>
