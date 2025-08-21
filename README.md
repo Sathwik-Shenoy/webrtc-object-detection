@@ -12,7 +12,7 @@ Real-time multi-object detection streaming from phone camera to browser with liv
 ```
 
 Then:
-1. 📱 **Phone**: Scan QR code or visit `http://localhost:3000/phone.html`
+1. 📱 **Phone**: Scan QR code or visit `http://localhost:3000/phone-connect.html`
 2. 💻 **Viewer**: Open `http://localhost:3000` on your laptop
 3. 📊 **Benchmark**: Run `./bench/run_bench.sh --duration 30`
 
@@ -156,7 +156,7 @@ SCORE_THRESHOLD=0.5      # Detection confidence threshold
 3. Scan QR code with phone
 
 ### Manual Connection
-Direct URL: `http://[YOUR_IP]:3000/phone.html`
+Direct URL: `http://[YOUR_IP]:3000/phone-connect.html`
 
 ### NAT/Firewall Issues
 ```bash
@@ -272,7 +272,7 @@ webrtc-object-detection/
 ├── start.sh               # Launch script
 ├── public/                # Frontend assets
 │   ├── index.html         # Viewer interface
-│   ├── phone.html         # Phone camera interface
+│   ├── phone-connect.html # Phone camera interface (connect flow)
 │   └── js/                # Client-side logic
 ├── src/                   # Server-side code
 │   ├── services/          # Core services

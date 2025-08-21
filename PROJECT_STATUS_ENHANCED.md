@@ -112,7 +112,7 @@
 
 ### **🔗 Key URLs**
 - **Viewer**: http://localhost:3000
-- **Phone Interface**: http://localhost:3000/phone.html
+- **Phone Interface**: http://localhost:3000/phone-connect.html
 - **Health Check**: http://localhost:3000/health
 - **Metrics**: http://localhost:3000/metrics
 - **GitHub Repository**: https://github.com/Sathwik-Shenoy/webrtc-object-detection

@@ -8,8 +8,9 @@ router.get('/', (req, res) => {
 });
 
 // Serve phone streaming page
+// Backward compatibility: redirect old path to new connect flow
 router.get('/phone.html', (req, res) => {
-  res.sendFile(path.join(__dirname, '../../public/phone.html'));
+  res.redirect(301, '/phone-connect.html');
 });
 
 // Redirect phone-connect.html to the intended phone connect page if it exists

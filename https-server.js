@@ -250,9 +250,9 @@ server.listen(PORT, () => {
   const localIP = getLocalIP();
   logger.info(`🚀 WebRTC Object Detection HTTPS Server running on port ${PORT}`);
   logger.info(`💻 Viewer URL (local): https://localhost:${PORT}`);
-  logger.info(`📱 Phone URL (local): https://localhost:${PORT}/phone-simple.html`);
+  logger.info(`📱 Phone URL (local): https://localhost:${PORT}/phone-connect.html`);
   logger.info(`💻 Viewer URL (network): https://${localIP}:${PORT}`);
-  logger.info(`📱 Phone URL (network): https://${localIP}:${PORT}/phone-simple.html`);
+  logger.info(`📱 Phone URL (network): https://${localIP}:${PORT}/phone-connect.html`);
   logger.info(`🧠 Inference mode: ${config.MODE}`);
   logger.info(`🔗 Scan QR code at: https://localhost:${PORT}/qr`);
   

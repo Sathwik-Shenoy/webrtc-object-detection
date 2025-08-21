@@ -22,7 +22,7 @@ required_files=(
     "start.sh"
     "README.md"
     "public/index.html"
-    "public/phone.html"
+    "public/phone-connect.html"
     "src/services/webrtc.js"
     "src/services/inference.js"
     "src/services/metrics.js"
@@ -203,7 +203,7 @@ fi
 # Test 9: Check HTML validity (basic)
 echo "🌐 Checking HTML files..."
 
-html_files=("public/index.html" "public/phone.html")
+html_files=("public/index.html" "public/phone-connect.html")
 for file in "${html_files[@]}"; do
     if [ -f "$file" ]; then
         # Basic HTML validation - check for required tags

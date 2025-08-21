@@ -113,7 +113,7 @@ else
     
     if [ -n "$NGROK_URL" ]; then
       echo "🌐 Public URL: $NGROK_URL"
-      echo "📱 Use this URL on your phone: $NGROK_URL/phone.html"
+  echo "📱 Use this URL on your phone: $NGROK_URL/phone-connect.html"
     fi
     
     # Cleanup function
@@ -127,7 +127,7 @@ else
   
   echo "🌍 Server will be available at:"
   echo "  Local:   http://localhost:$PORT"
-  echo "  Phone:   http://localhost:$PORT/phone.html"
+  echo "  Phone:   http://localhost:$PORT/phone-connect.html"
   
   if [ "$USE_NGROK" = true ] && [ -n "$NGROK_URL" ]; then
     echo "  Public:  $NGROK_URL"
