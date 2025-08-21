@@ -1,5 +1,6 @@
 const path = require('path');
 const fs = require('fs');
+const sharp = require('sharp');
 const logger = require('../utils/logger');
 const config = require('../utils/config');
 
@@ -19,6 +20,11 @@ class InferenceService {
     this.labels = [];
     this.isInitialized = false;
     this.sessionOptions = {};
+    this.inputSize = 640; // YOLOv5 default
+    this.classThresholds = {
+      person: 0.65, // reduce false positives on people
+      // You can tune more per-class thresholds here if needed
+    };
     
     this.initialize();
   }
@@ -30,7 +36,7 @@ class InferenceService {
     try {
       await this.loadLabels();
       
-      if (config.MODE === 'server' && ort) {
+  if (config.MODE === 'server' && ort) {
         await this.loadModel();
       }
       
@@ -90,7 +96,7 @@ class InferenceService {
       }
 
       // Configure session options
-      this.sessionOptions = {
+  this.sessionOptions = {
         executionProviders: ['CPUExecutionProvider'],
         graphOptimizationLevel: 'all',
         enableCpuMemArena: true,
@@ -239,7 +245,8 @@ class InferenceService {
       const imageBuffer = Buffer.from(imageData.split(',')[1], 'base64');
       
       // Preprocess image
-      const inputTensor = await this.preprocessImage(imageBuffer);
+      const prep = await this.preprocessImage(imageBuffer);
+      const inputTensor = prep.tensor;
       
       // Run inference
       const feeds = {};
@@ -249,7 +256,7 @@ class InferenceService {
       const output = results[this.model.outputNames[0]];
       
       // Post-process results
-      const detections = this.postprocessResults(output);
+      const detections = this.postprocessResults(output, prep);
       
       return detections;
     } catch (error) {
@@ -265,24 +272,53 @@ class InferenceService {
    */
   async preprocessImage(imageBuffer) {
     try {
-      // For now, create a mock tensor
-      // In a real implementation, you would:
-      // 1. Decode image using sharp or canvas
-      // 2. Resize to model input size (640x640 for YOLOv5)
-      // 3. Normalize pixel values
-      // 4. Convert to Float32Array
-      // 5. Create ONNX tensor
-      
-      const inputSize = 640;
-      const channels = 3;
-      const inputData = new Float32Array(1 * channels * inputSize * inputSize);
-      
-      // Fill with normalized random values for demo
-      for (let i = 0; i < inputData.length; i++) {
-        inputData[i] = Math.random();
+      const inputSize = this.inputSize;
+      // Read original dimensions
+      const meta = await sharp(imageBuffer).metadata();
+      const origW = meta.width || 0;
+      const origH = meta.height || 0;
+      if (!origW || !origH) {
+        throw new Error('Invalid image dimensions');
       }
-      
-      return new ort.Tensor('float32', inputData, [1, channels, inputSize, inputSize]);
+
+      // Compute letterbox scale and padding
+      const scale = Math.min(inputSize / origW, inputSize / origH);
+      const newW = Math.round(origW * scale);
+      const newH = Math.round(origH * scale);
+      const padX = Math.floor((inputSize - newW) / 2);
+      const padY = Math.floor((inputSize - newH) / 2);
+      const padRight = inputSize - newW - padX;
+      const padBottom = inputSize - newH - padY;
+
+      // Resize then pad to 640x640 with value 114
+      const { data } = await sharp(imageBuffer)
+        .resize(newW, newH, { fit: 'fill' })
+        .extend({
+          top: padY,
+          bottom: padBottom,
+          left: padX,
+          right: padRight,
+          background: { r: 114, g: 114, b: 114 }
+        })
+        .toColourspace('rgb')
+        .raw()
+        .toBuffer({ resolveWithObject: true });
+
+      // Convert HWC uint8 to CHW float32 normalized
+      const chw = new Float32Array(3 * inputSize * inputSize);
+      let p = 0;
+      const hw = inputSize * inputSize;
+      for (let i = 0; i < hw; i++) {
+        const r = data[p++] / 255;
+        const g = data[p++] / 255;
+        const b = data[p++] / 255;
+        chw[i] = r;            // R
+        chw[i + hw] = g;       // G
+        chw[i + 2 * hw] = b;   // B
+      }
+
+      const tensor = new ort.Tensor('float32', chw, [1, 3, inputSize, inputSize]);
+      return { tensor, inputSize, origW, origH, scale, padX, padY };
     } catch (error) {
       logger.error('Image preprocessing failed:', error);
       throw error;
@@ -294,41 +330,145 @@ class InferenceService {
    * @param {ort.Tensor} output - Model output tensor
    * @returns {Array} Array of detections
    */
-  postprocessResults(output) {
+  postprocessResults(output, prep) {
     try {
-      const detections = [];
-      
-      // Mock post-processing for demo
-      // In a real implementation, you would:
-      // 1. Parse YOLO output format
-      // 2. Apply confidence threshold
-      // 3. Apply NMS (Non-Maximum Suppression)
-      // 4. Convert to normalized coordinates
-      
-      const numDetections = Math.floor(Math.random() * 5) + 1;
-      
-      for (let i = 0; i < numDetections; i++) {
-        const classId = Math.floor(Math.random() * this.labels.length);
-        const score = 0.5 + Math.random() * 0.4; // Score between 0.5-0.9
-        
-        // Random bounding box coordinates (normalized)
-        const xmin = Math.random() * 0.5;
-        const ymin = Math.random() * 0.5;
-        const width = 0.1 + Math.random() * 0.3;
-        const height = 0.1 + Math.random() * 0.3;
-        
-        detections.push({
-          label: this.labels[classId],
-          score: score,
-          bbox: [xmin, ymin, xmin + width, ymin + height]
+      // Parse YOLOv5 output and apply thresholds and NMS
+      const data = output.data;
+      const dims = output.dims || output.dims_ || [];
+      const inputSize = prep.inputSize;
+      const { origW, origH, scale, padX, padY } = prep;
+
+      // Determine layout
+      let numPreds = 0;
+      let attrs = 0;
+      let layout = 'NC'; // N x numPreds x attrs
+      if (dims.length === 3) {
+        if (dims[1] > dims[2]) { // [1,25200,85]
+          numPreds = dims[1];
+          attrs = dims[2];
+          layout = 'NC';
+        } else { // [1,85,25200]
+          numPreds = dims[2];
+          attrs = dims[1];
+          layout = 'CN';
+        }
+      } else {
+        // Fallback assume [1,25200,85]
+        numPreds = 25200;
+        attrs = 85;
+      }
+
+      const candidates = [];
+      const scoreThreshold = config.INFERENCE.scoreThreshold || 0.5;
+
+      const getVal = (i, k) => {
+        if (layout === 'NC') {
+          return data[i * attrs + k];
+        } else {
+          // CN: [k, i]
+          return data[k * numPreds + i];
+        }
+      };
+
+      for (let i = 0; i < numPreds; i++) {
+        const x = getVal(i, 0);
+        const y = getVal(i, 1);
+        const w = getVal(i, 2);
+        const h = getVal(i, 3);
+        const obj = getVal(i, 4);
+        if (w <= 0 || h <= 0) continue;
+
+        // Find best class
+        let bestClass = -1;
+        let bestProb = 0;
+        for (let c = 5; c < attrs; c++) {
+          const p = getVal(i, c);
+          if (p > bestProb) {
+            bestProb = p;
+            bestClass = c - 5;
+          }
+        }
+
+        const score = obj * bestProb;
+        const label = this.labels[bestClass] || `class_${bestClass}`;
+        const classThresh = Math.max(scoreThreshold, this.classThresholds[label] || 0);
+        if (score < classThresh) continue;
+
+        // Convert to xyxy in input scale
+        const left = x - w / 2;
+        const top = y - h / 2;
+        const right = x + w / 2;
+        const bottom = y + h / 2;
+
+        // Map back to original image scale (undo letterbox)
+        const x0 = Math.max(0, Math.min(origW, (left - padX) / scale));
+        const y0 = Math.max(0, Math.min(origH, (top - padY) / scale));
+        const x1 = Math.max(0, Math.min(origW, (right - padX) / scale));
+        const y1 = Math.max(0, Math.min(origH, (bottom - padY) / scale));
+
+        candidates.push({
+          label,
+          score,
+          x0, y0, x1, y1,
+          classId: bestClass
         });
       }
-      
+
+      // Per-class NMS
+      const iouThresh = config.INFERENCE.nmsThreshold || 0.45;
+      const byClass = new Map();
+      for (const det of candidates) {
+        const key = det.classId;
+        if (!byClass.has(key)) byClass.set(key, []);
+        byClass.get(key).push(det);
+      }
+
+      const final = [];
+      byClass.forEach(list => {
+        list.sort((a, b) => b.score - a.score);
+        const keep = [];
+        for (const det of list) {
+          let overlap = false;
+          for (const kept of keep) {
+            const iou = this.iou(det, kept);
+            if (iou > iouThresh) { overlap = true; break; }
+          }
+          if (!overlap) keep.push(det);
+        }
+        final.push(...keep);
+      });
+
+      // Normalize to 0..1
+      const detections = final.map(d => ({
+        label: d.label,
+        score: d.score,
+        bbox: [
+          d.x0 / origW,
+          d.y0 / origH,
+          d.x1 / origW,
+          d.y1 / origH
+        ]
+      }));
+
       return detections;
     } catch (error) {
       logger.error('Post-processing failed:', error);
       return [];
     }
+  }
+
+  iou(a, b) {
+    const x1 = Math.max(a.x0, b.x0);
+    const y1 = Math.max(a.y0, b.y0);
+    const x2 = Math.min(a.x1, b.x1);
+    const y2 = Math.min(a.y1, b.y1);
+    const w = Math.max(0, x2 - x1);
+    const h = Math.max(0, y2 - y1);
+    const inter = w * h;
+    const areaA = (a.x1 - a.x0) * (a.y1 - a.y0);
+    const areaB = (b.x1 - b.x0) * (b.y1 - b.y0);
+    const union = areaA + areaB - inter;
+    return union <= 0 ? 0 : inter / union;
   }
 
   /**
