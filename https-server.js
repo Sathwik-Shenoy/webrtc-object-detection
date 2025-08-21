@@ -83,6 +83,49 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Object detection endpoint for real-time inference
+app.post('/detect', async (req, res) => {
+  try {
+    const { image, timestamp } = req.body;
+    
+    if (!image) {
+      return res.status(400).json({
+        error: 'Missing image data'
+      });
+    }
+    
+    // Import inference service
+    const { InferenceService } = require('./src/services/inference');
+    const inferenceService = new InferenceService();
+    
+    const startTime = Date.now();
+    const detections = await inferenceService.detectObjects(image);
+    const processingTime = Date.now() - startTime;
+    
+    // Log detection for metrics
+    logger.info(`Detection completed: ${detections.length} objects found in ${processingTime}ms`, {
+      service: 'webrtc-detection',
+      detectionCount: detections.length,
+      processingTime,
+      timestamp: new Date().toISOString()
+    });
+    
+    res.json({
+      success: true,
+      detections,
+      processingTime,
+      timestamp: new Date().toISOString()
+    });
+    
+  } catch (error) {
+    logger.error('Real-time detection failed:', error);
+    res.status(500).json({
+      error: 'Detection failed',
+      message: error.message
+    });
+  }
+});
+
 // Function to get local IP address
 function getLocalIP() {
   const { networkInterfaces } = require('os');

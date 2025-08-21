@@ -395,12 +395,12 @@
                 this.isDetectionActive = true;
                 this.toggleDetectionBtn.textContent = 'Stop Detection';
                 this.toggleDetectionBtn.className = 'btn danger';
-                this.log('🎯 Starting object detection...');
+                this.log('🎯 Starting real-time object detection...');
                 
-                // Simple detection simulation - replace with actual ML inference
+                // Real AI detection - slower but more realistic for processing
                 this.detectionInterval = setInterval(() => {
                     this.processFrame();
-                }, 100); // 10 FPS
+                }, 500); // 2 FPS for real AI processing
             }
             
             stopDetection() {
@@ -417,21 +417,59 @@
                 this.ctx.clearRect(0, 0, this.detectionCanvas.width, this.detectionCanvas.height);
             }
             
-            processFrame() {
+            async processFrame() {
                 if (!this.remoteVideo.videoWidth || !this.remoteVideo.videoHeight) return;
                 
-                // Draw video frame to canvas
-                this.ctx.drawImage(this.remoteVideo, 0, 0, this.detectionCanvas.width, this.detectionCanvas.height);
+                try {
+                    // Draw video frame to canvas for capture
+                    this.ctx.drawImage(this.remoteVideo, 0, 0, this.detectionCanvas.width, this.detectionCanvas.height);
+                    
+                    // Convert canvas to base64 image data
+                    const imageData = this.detectionCanvas.toDataURL('image/jpeg', 0.8);
+                    
+                    // Send frame to server for real AI detection
+                    const startTime = Date.now();
+                    const response = await fetch('/detect', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ 
+                            image: imageData,
+                            timestamp: startTime
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        const result = await response.json();
+                        const latency = Date.now() - startTime;
+                        
+                        // Draw real detection results
+                        this.drawDetections(result.detections || []);
+                        
+                        // Update stats with real data
+                        this.stats.objects = result.detections ? result.detections.length : 0;
+                        this.stats.latency = latency;
+                        this.stats.confidence = result.detections && result.detections.length > 0 
+                            ? result.detections.reduce((sum, det) => sum + (det.score || det.confidence || 0), 0) / result.detections.length 
+                            : 0;
+                        this.stats.fps = Math.round(1000 / Math.max(latency, 100)); // Estimate FPS
+                        
+                        this.log(`🎯 Detected ${this.stats.objects} objects (${latency}ms)`);
+                    } else {
+                        this.log('❌ Detection request failed');
+                    }
+                    
+                } catch (error) {
+                    this.log('❌ Frame processing error: ' + error.message);
+                }
                 
-                // Simulate object detection (replace with actual ML inference)
-                this.simulateDetection();
-                
-                // Update stats
+                // Update stats display
                 this.updateStats();
             }
             
             simulateDetection() {
-                // This is a placeholder - replace with actual YOLO/ML inference
+                // Fallback simulation for when server detection fails
                 const detections = [
                     {
                         class: 'person',
@@ -451,27 +489,68 @@
             }
             
             drawDetections(detections) {
+                // Clear previous detections
+                this.ctx.clearRect(0, 0, this.detectionCanvas.width, this.detectionCanvas.height);
+                
+                // Redraw video frame
+                this.ctx.drawImage(this.remoteVideo, 0, 0, this.detectionCanvas.width, this.detectionCanvas.height);
+                
+                // Set drawing style
                 this.ctx.strokeStyle = '#00ff00';
-                this.ctx.lineWidth = 2;
+                this.ctx.lineWidth = 3;
                 this.ctx.font = '16px Arial';
                 this.ctx.fillStyle = '#00ff00';
+                this.ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+                this.ctx.shadowOffsetX = 1;
+                this.ctx.shadowOffsetY = 1;
                 
                 detections.forEach(detection => {
-                    const [x, y, w, h] = detection.bbox;
+                    // Handle both old format (for simulation) and new format (from API)
+                    let x, y, w, h, label, confidence;
+                    
+                    if (detection.bbox && detection.bbox.length === 4) {
+                        if (detection.label && detection.score !== undefined) {
+                            // New API format: normalized coordinates [xmin, ymin, xmax, ymax]
+                            const [xmin, ymin, xmax, ymax] = detection.bbox;
+                            x = xmin * this.detectionCanvas.width;
+                            y = ymin * this.detectionCanvas.height;
+                            w = (xmax - xmin) * this.detectionCanvas.width;
+                            h = (ymax - ymin) * this.detectionCanvas.height;
+                            label = detection.label;
+                            confidence = detection.score;
+                        } else {
+                            // Old simulation format: [x, y, w, h]
+                            [x, y, w, h] = detection.bbox;
+                            label = detection.class || 'object';
+                            confidence = detection.confidence || 0.5;
+                        }
+                    } else {
+                        return; // Skip invalid detections
+                    }
                     
                     // Draw bounding box
                     this.ctx.strokeRect(x, y, w, h);
                     
-                    // Draw label
-                    const label = `${detection.class} ${(detection.confidence * 100).toFixed(0)}%`;
-                    this.ctx.fillText(label, x, y - 5);
+                    // Draw label background
+                    const text = `${label} ${(confidence * 100).toFixed(0)}%`;
+                    const textMetrics = this.ctx.measureText(text);
+                    const textWidth = textMetrics.width;
+                    const textHeight = 20;
+                    
+                    this.ctx.fillStyle = 'rgba(0, 255, 0, 0.8)';
+                    this.ctx.fillRect(x, y - textHeight - 2, textWidth + 10, textHeight + 4);
+                    
+                    // Draw label text
+                    this.ctx.fillStyle = '#000000';
+                    this.ctx.fillText(text, x + 5, y - 5);
                 });
+                
+                // Reset shadow
+                this.ctx.shadowColor = 'transparent';
             }
             
             updateStats() {
-                this.stats.fps = Math.round(Math.random() * 5 + 8); // Simulate 8-13 FPS
-                this.stats.latency = Math.round(Math.random() * 50 + 30); // Simulate 30-80ms
-                
+                // Update display with current stats (no more fake data)
                 document.getElementById('fpsValue').textContent = this.stats.fps;
                 document.getElementById('objectsValue').textContent = this.stats.objects;
                 document.getElementById('latencyValue').textContent = this.stats.latency;
