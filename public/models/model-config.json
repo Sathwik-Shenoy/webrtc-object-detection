@@ -1,0 +1,23 @@
+{
+  "model": "yolov5n",
+  "version": "7.0",
+  "framework": "onnx",
+  "inputSize": [640, 640],
+  "inputFormat": "RGB",
+  "meanNormalization": [0.0, 0.0, 0.0],
+  "stdNormalization": [255.0, 255.0, 255.0],
+  "classes": 80,
+  "scoreThreshold": 0.5,
+  "nmsThreshold": 0.4,
+  "anchors": [
+    [10, 13, 16, 30, 33, 23],
+    [30, 61, 62, 45, 59, 119],
+    [116, 90, 156, 198, 373, 326]
+  ],
+  "strides": [8, 16, 32],
+  "outputFormat": "yolo",
+  "description": "YOLOv5 Nano model optimized for real-time object detection",
+  "license": "GPL-3.0",
+  "author": "Ultralytics",
+  "url": "https://github.com/ultralytics/yolov5"
+}
