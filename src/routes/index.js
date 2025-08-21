@@ -12,6 +12,11 @@ router.get('/phone.html', (req, res) => {
   res.sendFile(path.join(__dirname, '../../public/phone.html'));
 });
 
+// Redirect phone-connect.html to the intended phone connect page if it exists
+router.get('/phone-connect.html', (req, res) => {
+  res.sendFile(path.join(__dirname, '../../public/phone-connect.html'));
+});
+
 // Serve demo page with instructions
 router.get('/demo', (req, res) => {
   res.send(`
@@ -50,7 +55,7 @@ router.get('/demo', (req, res) => {
       
       <div style="text-align: center;">
         <button class="button" onclick="window.open('/', '_blank')">🖥️ Open Viewer</button>
-        <button class="button" onclick="window.open('/phone.html', '_blank')">📱 Open Phone Camera</button>
+  <button class="button" onclick="window.open('/phone-connect.html', '_blank')">📱 Open Phone Camera</button>
         <button class="button" onclick="window.open('/metrics', '_blank')">📊 View Metrics</button>
       </div>
       

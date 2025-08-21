@@ -120,7 +120,7 @@ app.get('/qr', async (req, res) => {
       baseUrl = `${req.protocol}://${host}`;
     }
     
-    const phoneUrl = `${baseUrl}/phone.html`;
+  const phoneUrl = `${baseUrl}/phone-connect.html`;
     
     const qrCode = await QRCode.toDataURL(phoneUrl, {
       width: 256,
@@ -198,9 +198,9 @@ server.listen(PORT, () => {
   const localIP = getLocalIP();
   logger.info(`🚀 WebRTC Object Detection Server running on port ${PORT}`);
   logger.info(`💻 Viewer URL (local): http://localhost:${PORT}`);
-  logger.info(`📱 Phone URL (local): http://localhost:${PORT}/phone.html`);
+  logger.info(`📱 Phone URL (local): http://localhost:${PORT}/phone-connect.html`);
   logger.info(`💻 Viewer URL (network): http://${localIP}:${PORT}`);
-  logger.info(`📱 Phone URL (network): http://${localIP}:${PORT}/phone.html`);
+  logger.info(`📱 Phone URL (network): http://${localIP}:${PORT}/phone-connect.html`);
   logger.info(`🧠 Inference mode: ${config.MODE}`);
   logger.info(`🔗 Scan QR code at: http://localhost:${PORT}/qr`);
   
