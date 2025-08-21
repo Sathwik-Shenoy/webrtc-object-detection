@@ -8,13 +8,8 @@ We successfully transformed your basic WebRTC object detection demo into a **com
 
 ## **✨ WHAT WE ADDED**
 
-### **🔍 1. Advanced Object Tracking System**
-**Files Created**: `public/js/object-tracker.js`
-- **IoU-based tracking** with Kalman filter predictions
-- **Persistent object IDs** across frames (Track #1, #2, etc.)
-- **Trajectory visualization** showing object movement paths
-- **Velocity estimation** for motion prediction
-- **Professional-grade multi-object tracking**
+### **🔍 1. Advanced Object Tracking System (Removed)**
+Originally implemented in `public/js/object-tracker.js` (now removed during cleanup as feature not part of current minimal demo scope).
 
 ### **📊 2. Real-Time Analytics Dashboard**
 **Files Created**: `public/js/analytics-dashboard.js`
@@ -40,12 +35,8 @@ We successfully transformed your basic WebRTC object detection demo into a **com
 - **Glow effects** and pulsing animations
 - **Professional AR-style presentation**
 
-### **🔧 5. Enhanced Viewer Integration**
-**Files Created**: `public/js/enhanced-viewer.js`
-- **Feature toggle buttons** (3D, Tracking, Analytics, Alerts)
-- **Unified feature management** and state handling
-- **Enhanced screenshot** with all overlays
-- **Professional UI indicators** and status display
+### **🔧 5. Enhanced Viewer Integration (Removed)**
+`public/js/enhanced-viewer.js` removed; current viewer uses simplified inline scripts for lean assignment compliance.
 
 ---
 
@@ -92,12 +83,9 @@ node server.js
 
 ## **📊 FILES ADDED/MODIFIED**
 
-### **✅ New JavaScript Modules**
-- `public/js/object-tracker.js` - Multi-object tracking system
-- `public/js/analytics-dashboard.js` - Real-time analytics
-- `public/js/smart-alerts.js` - Intelligent alert system
-- `public/js/ar-3d-boxes.js` - AR-style 3D visualization
-- `public/js/enhanced-viewer.js` - Integrated feature management
+### **✅ JavaScript Modules (Current Vs Removed)**
+- Removed during footprint cleanup: `object-tracker.js`, `enhanced-viewer.js` and related advanced demo modules to keep repository focused on core assignment deliverables.
+- Active functionality now resides in inline scripts within `laptop-viewer.html` and `phone-connect.html` plus server-side services.
 
 ### **📝 Enhanced Documentation**
 - `COMPETITIVE_FEATURES.md` - Detailed feature overview
@@ -145,7 +133,7 @@ Your enhanced WebRTC Object Detection system is now **ready to showcase** with:
 
 **GitHub Repository**: https://github.com/Sathwik-Shenoy/webrtc-object-detection
 
-**This transformation elevates your project from a basic demo to a complete object intelligence platform that demonstrates advanced computer vision, real-time analytics, and modern web development skills!** 🚀
+**Note:** Advanced prototype modules were pruned to reduce bundle size and highlight the core interview assignment (real-time phone stream, detection overlay, metrics, dual modes). The history remains in version control if reintroduction is needed. 🚀
 
 ---
 

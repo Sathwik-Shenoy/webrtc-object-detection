@@ -273,7 +273,7 @@ webrtc-object-detection/
 ├── public/                # Frontend assets
 │   ├── index.html         # Viewer interface
 │   ├── phone-connect.html # Phone camera interface (connect flow)
-│   └── js/                # Client-side logic
+│   └── js/                # (legacy standalone scripts removed 2025-08-22)
 ├── src/                   # Server-side code
 │   ├── services/          # Core services
 │   ├── routes/            # API routes
@@ -307,6 +307,16 @@ NODE_ENV=production ./start.sh
 5. **Mobile App**: Native iOS/Android applications
 6. **Cloud Deployment**: Kubernetes/AWS deployment guides
 
+## 🔄 Housekeeping & Removed Legacy Files
+
+To keep the repo aligned with the interview brief, legacy prototype pages & scripts were pruned on 2025-08-22:
+
+- Pages removed: `phone.html`, `phone-simple.html` (redirect `/phone.html` still works)
+- Scripts removed: `viewer.js`, `phone.js`, `utils.js`, `object-tracker.js`, `enhanced-viewer.js`
+- Active logic now resides inline within `laptop-viewer.html` and `phone-connect.html` plus server services.
+
+See `CHANGELOG.md` for a chronological list of changes.
+
 ## 📝 License
 
 MIT License - see [LICENSE](LICENSE) file for details.
@@ -328,4 +338,4 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ---
 
-**📹 [View Demo Video](https://loom.com/share/your-demo-link)** | **📊 [Performance Report](./REPORT.md)** | **🐛 [Report Issues](https://github.com/your-repo/issues)**
+**📹 [View Demo Video](https://drive.google.com/file/d/1IgVtaOLCMHpNPFu_oxzrGDPIWpk5qY9l/view?usp=drive_link)** | **📊 [Performance Report](./REPORT.md)** | **🐛 [Report Issues](https://github.com/your-repo/issues)**
